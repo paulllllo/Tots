@@ -1,0 +1,72 @@
+'use client';
+
+import { useState } from 'react';
+import IdeaPreview from './IdeaPreview';
+import { Timestamp } from 'firebase/firestore';
+
+interface Idea {
+  id: string;
+  headline: string;
+  description: string;
+  tags: string[];
+  authorId: string;
+  authorProfilePictureUrl: string;
+  timestamp: Timestamp;
+  likes?: number;
+  comments?: number;
+}
+
+interface IdeaFeedProps {
+  initialIdeas: Idea[];
+}
+
+export default function IdeaFeed({ initialIdeas }: IdeaFeedProps) {
+  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+
+  const handleIdeaClick = (idea: Idea) => {
+    setSelectedIdea(idea);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedIdea(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      {ideas.map(idea => (
+        <div
+          key={idea.id}
+          className="border p-4 rounded shadow cursor-pointer hover:bg-gray-50"
+          onClick={() => handleIdeaClick(idea)}
+        >
+          <h2 className="text-xl font-bold">{idea.headline}</h2>
+          <p className="mt-2">{idea.description.substring(0, 150)}...</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {idea.tags.map(tag => (
+              <span key={tag} className="bg-gray-200 px-2 py-1 rounded text-sm">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center">
+            <img
+              src={idea.authorProfilePictureUrl || '/default-avatar.png'}
+              alt="Author"
+              className="w-8 h-8 rounded-full mr-2"
+            />
+            <span className="text-sm text-gray-600">Posted by {idea.authorId}</span>
+          </div>
+        </div>
+      ))}
+
+      {selectedIdea && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" onClick={handleCloseModal}>
+          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <IdeaPreview idea={selectedIdea} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+} 
