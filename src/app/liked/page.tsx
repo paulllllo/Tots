@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { auth } from '../../utils/firebaseConfig';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, FieldPath } from 'firebase/firestore';
 import { firestore } from '../../utils/firebaseConfig';
 
 interface Idea {
@@ -25,9 +25,14 @@ export default function LikedIdeas() {
         const likesQuery = query(collection(firestore, 'likes'), where('userId', '==', currentUser.uid));
         const querySnapshot = await getDocs(likesQuery);
         const likedIdeaIds = querySnapshot.docs.map(doc => doc.data().ideaId);
+        console.log('likedIdeas', likedIdeaIds)
 
-        const ideasQuery = query(collection(firestore, 'ideas'), where('id', 'in', likedIdeaIds));
+        const collectionRef = collection(firestore, 'ideas')
+
+        const ideasQuery = query(collectionRef, where(new FieldPath('__name__'), 'in', likedIdeaIds));
+        console.log('ideaQuery', ideasQuery)
         const ideasSnapshot = await getDocs(ideasQuery);
+        console.log('ideaSnapshot', ideasSnapshot.docs)
         const ideasList = ideasSnapshot.docs.map(doc => ({
           id: doc.id,
           headline: doc.data().headline,
@@ -37,6 +42,7 @@ export default function LikedIdeas() {
           authorProfilePictureUrl: doc.data().authorProfilePictureUrl,
           timestamp: doc.data().timestamp,
         }));
+        console.log('ideaList', ideasList)
         setLikedIdeas(ideasList);
       }
     };

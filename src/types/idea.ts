@@ -10,11 +10,19 @@ export interface Idea {
   timestamp: string;
   likes: number;
   comments: number;
-} 
+}
 
 export interface Comment {
   id: string;
   userId: string;
   content: string;
   timestamp: string;
+}
+
+export interface User {
+  name: string
+  username: string
+  email: string
+  profession: string
+  profilePictureUrl: string
 }

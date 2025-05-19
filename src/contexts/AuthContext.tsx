@@ -2,14 +2,16 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from 'firebase/auth';
-import { signup, login, onAuthStateChange } from '../utils/auth';
+// import { User } from '@/types/idea';
+import { signup, login, logout, onAuthStateChange } from '../utils/auth';
 import { auth } from '@/utils/firebaseConfig';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  signup: (email: string, password: string, name: string, username: string, profession: string, profilePicture: File) => Promise<User>;
+  signup: (email: string, password: string, name: string, username: string, profession: string, profilePictureUrl: string) => Promise<User>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   login: () => Promise.reject('Not implemented'),
   signup: () => Promise.reject('Not implemented'),
+  logout: () => Promise.reject('Not implemented'),
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -39,7 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       login,
-      signup
+      signup,
+      logout
     }}>
       {children}
     </AuthContext.Provider>

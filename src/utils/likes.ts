@@ -4,8 +4,8 @@ import { doc, setDoc, deleteDoc, getDoc, updateDoc, increment, serverTimestamp }
 export const addLike = async (userId: string, ideaId: string) => {
   const likeRef = doc(firestore, 'likes', `${userId}_${ideaId}`);
   await setDoc(likeRef, { 
-    userId, 
-    ideaId, 
+    userId,
+    ideaId,
     timestamp: serverTimestamp() 
   });
 

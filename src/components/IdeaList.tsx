@@ -4,31 +4,35 @@ import { useState, useEffect, useCallback } from 'react';
 import SearchBar from './SearchBar';
 import IdeaPreview from './IdeaPreview';
 import { Idea } from '../types/idea';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { firestore } from '../utils/firebaseConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { addLike, removeLike, hasLiked } from '../utils/likes';
+import Image from 'next/image';
 
 interface IdeaListProps {
   initialIdeas: Idea[];
 }
 
+const defaultAvatar = 'https://api.dicebear.com/9.x/avataaars-neutral/svg?radius=0';
+
 export default function IdeaList({ initialIdeas }: IdeaListProps) {
-  // Initialize state with processed timestamps
   const [ideas, setIdeas] = useState<Idea[]>(() => 
     initialIdeas.map(idea => ({
       ...idea,
-      // Ensure timestamp is consistently formatted
       timestamp: idea.timestamp || new Date().toISOString()
     }))
   );
   const [filteredIdeas, setFilteredIdeas] = useState<Idea[]>(ideas);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [likedIdeas, setLikedIdeas] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+  const [userProfiles, setUserProfiles] = useState<Record<string, { name: string; profilePictureUrl: string }>>({});
 
-  const handleSearch = useCallback((term: string) => {
+  // Debounced search function
+  const debouncedSearch = useCallback((term: string) => {
     const filtered = ideas.filter(idea => 
       idea.headline.toLowerCase().includes(term.toLowerCase()) || 
       idea.description.toLowerCase().includes(term.toLowerCase()) ||
@@ -37,6 +41,21 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
     setFilteredIdeas(filtered);
   }, [ideas]);
 
+  // Handle search input with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      debouncedSearch(searchTerm);
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, debouncedSearch]);
+
+  // Handle search input changes
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+  }, []);
+
+  // Fetch ideas from Firestore
   useEffect(() => {
     const ideasQuery = query(
       collection(firestore, 'ideas'),
@@ -44,28 +63,24 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
     );
 
     const unsubscribe = onSnapshot(ideasQuery, (snapshot) => {
-      const updatedIdeas = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Convert Firestore timestamp to ISO string
-          timestamp: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
-        };
-      }) as Idea[];
+      const updatedIdeas = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate?.()?.toISOString() || new Date().toISOString()
+      })) as Idea[];
+      console.log('IdeasStructure', updatedIdeas)
       
       setIdeas(updatedIdeas);
-      handleSearch('');
     }, (error) => {
       console.error('Error fetching ideas:', error);
     });
 
     return () => unsubscribe();
-  }, [handleSearch]);
+  }, []); // Only run once on mount
 
+  // Check liked status for visible ideas
   useEffect(() => {
     if (user) {
-      // Check liked status for all visible ideas
       filteredIdeas.forEach(async (idea) => {
         const isLiked = await hasLiked(user.uid, idea.id);
         if (isLiked) {
@@ -74,6 +89,42 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
       });
     }
   }, [user, filteredIdeas]);
+
+  // Fetch user profiles for ideas
+  useEffect(() => {
+    const fetchUserProfiles = async () => {
+      const profiles: Record<string, { name: string; profilePictureUrl: string }> = {};
+      
+      for (const idea of ideas) {
+        console.log('userData in fetchProfiles', idea.authorId)
+        if (!idea.authorId || userProfiles[idea.authorId]) continue;
+        
+        try {
+          const userDoc = await getDoc(doc(firestore, 'users', idea.authorId));
+          if (userDoc?.exists()) {
+            const userData = userDoc.data();
+            if (userData) {
+              profiles[idea.authorId] = {
+                name: userData.username || 'Anonymous',
+                profilePictureUrl: userData.profilePictureUrl || defaultAvatar
+              };
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          // Set default profile for failed fetches
+          profiles[idea.authorId] = {
+            name: 'Anonymous',
+            profilePictureUrl: defaultAvatar
+          };
+        }
+      }
+      
+      setUserProfiles(prev => ({ ...prev, ...profiles }));
+    };
+
+    fetchUserProfiles();
+  }, [ideas]);
 
   const handleIdeaClick = (idea: Idea) => {
     setSelectedIdea(idea);
@@ -144,6 +195,20 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
             className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100 cursor-pointer"
             onClick={() => handleIdeaClick(idea)}
           >
+            <div className="flex items-center mb-4">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
+                <Image
+                  src={userProfiles[idea.authorId]?.profilePictureUrl || defaultAvatar}
+                  alt={userProfiles[idea.authorId]?.name || 'User'}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">{userProfiles[idea.authorId]?.name || 'Anonymous'}</p>
+                <p className="text-sm text-gray-500">{formatDate(idea.timestamp)}</p>
+              </div>
+            </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">{idea.headline}</h2>
             <p className="text-gray-600 mb-4 line-clamp-3">{idea.description}</p>
             <div className="flex flex-wrap gap-2 mb-4">
@@ -189,9 +254,6 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
                   <span>{idea.comments || 0}</span>
                 </button>
               </div>
-              <span className="text-gray-400">
-                {formatDate(idea.timestamp)}
-              </span>
             </div>
           </div>
         ))}
@@ -199,7 +261,7 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
 
       {selectedIdea && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50" 
           onClick={handleCloseModal}
         >
           <div 
@@ -207,7 +269,11 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
             onClick={e => e.stopPropagation()}
           >
             <div className="p-6">
-              <IdeaPreview idea={selectedIdea} commentsOpen={showComments} />
+              <IdeaPreview 
+                idea={selectedIdea} 
+                commentsOpen={showComments} 
+                userProfile={userProfiles[selectedIdea.authorId]}
+              />
             </div>
           </div>
         </div>

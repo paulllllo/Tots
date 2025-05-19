@@ -46,7 +46,6 @@ export default function CreateIdeaModal({ isOpen, onClose }: CreateIdeaModalProp
         description: formData.description,
         tags: tagsArray,
         authorId: user.uid,
-        authorProfilePictureUrl: user.photoURL || '',
         timestamp: serverTimestamp(),
         likes: 0,
         comments: 0
@@ -120,14 +119,14 @@ export default function CreateIdeaModal({ isOpen, onClose }: CreateIdeaModalProp
             <button 
               type="button" 
               onClick={onClose} 
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              className="px-4 py-2 bg-gray-300 cursor-pointer rounded hover:bg-gray-400"
               disabled={loading}
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Submit'}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 
 interface SearchBarProps {
   onSearch: (term: string) => void;
@@ -14,13 +14,20 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
     onSearch(searchTerm);
   };
 
+  const handleSearch  = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setSearchTerm(e.target.value)
+    // console.log('Searched term')
+    onSearch(e.target.value)
+  }
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
       <div className="relative">
         <input
           type="text"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => handleSearch(e)}
           placeholder="Search ideas..."
           className="w-full px-4 py-3 pl-12 text-gray-900 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
         />

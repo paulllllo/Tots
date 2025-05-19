@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import CreateIdeaModal from './CreateIdeaModal';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -20,6 +22,15 @@ export default function Header() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
@@ -38,23 +49,35 @@ export default function Header() {
             <Link href="/" className="text-gray-600 hover:text-gray-900 transition-colors">
               Home
             </Link>
-            <Link href="/liked" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Liked Ideas
-            </Link>
-            <Link href="/profile" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Profile
-            </Link>
+            {isAuthenticated && (
+              <>
+                <Link href="/liked" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Liked Ideas
+                </Link>
+                <Link href="/profile" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Profile
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Auth Buttons */}
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
-              <button 
-                onClick={handleOpenModal}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
-              >
-                New Idea
-              </button>
+              <>
+                <button 
+                  onClick={handleOpenModal}
+                  className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  New Idea
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <Link href="/signup" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Sign In
