@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import SearchBar from './SearchBar';
 import IdeaPreview from './IdeaPreview';
 import { Idea } from '../types/idea';
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '../utils/firebaseConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { addLike, removeLike, hasLiked } from '../utils/likes';
@@ -126,15 +126,35 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
     fetchUserProfiles();
   }, [ideas]);
 
-  const handleIdeaClick = (idea: Idea) => {
+  // Update engagement when idea is clicked
+  const handleIdeaClick = async (idea: Idea) => {
     setSelectedIdea(idea);
     setShowComments(false);
+    
+    try {
+      const ideaRef = doc(firestore, 'ideas', idea.id);
+      await updateDoc(ideaRef, {
+        engagement: (idea.engagement || 0) + 1
+      });
+    } catch (error) {
+      console.error('Error updating engagement:', error);
+    }
   };
 
-  const handleCommentClick = (e: React.MouseEvent, idea: Idea) => {
+  // Update engagement when comment is clicked
+  const handleCommentClick = async (e: React.MouseEvent, idea: Idea) => {
     e.stopPropagation();
     setSelectedIdea(idea);
     setShowComments(true);
+    
+    try {
+      const ideaRef = doc(firestore, 'ideas', idea.id);
+      await updateDoc(ideaRef, {
+        engagement: (idea.engagement || 0) + 1
+      });
+    } catch (error) {
+      console.error('Error updating engagement:', error);
+    }
   };
 
   const handleCloseModal = () => {
@@ -142,6 +162,7 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
     setShowComments(false);
   };
 
+  // Update engagement when like is clicked
   const handleLike = async (e: React.MouseEvent, idea: Idea) => {
     e.stopPropagation();
     if (!user) return;
@@ -158,6 +179,12 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
       } else {
         await addLike(user.uid, idea.id);
         setLikedIdeas(prev => new Set([...prev, idea.id]));
+        
+        // Update engagement when liking
+        const ideaRef = doc(firestore, 'ideas', idea.id);
+        await updateDoc(ideaRef, {
+          engagement: (idea.engagement || 0) + 1
+        });
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -253,6 +280,13 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
                   </svg>
                   <span>{idea.comments || 0}</span>
                 </button>
+                <div className="flex items-center space-x-1 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>{idea.engagement || 0}</span>
+                </div>
               </div>
             </div>
           </div>

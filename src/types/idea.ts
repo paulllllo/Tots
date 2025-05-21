@@ -10,6 +10,7 @@ export interface Idea {
   timestamp: string;
   likes: number;
   comments: number;
+  engagement: number;
 }
 
 export interface Comment {

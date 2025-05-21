@@ -53,7 +53,7 @@ export default function AvatarSelector({ onSelect, selectedUrl }: AvatarSelector
                   className="object-contain"
                 />
               </div>
-              {/* <p className="text-center text-sm mt-2 text-black">{avatar.name}</p> */}
+              {/* <p className="text-center text-sm mt-2 text-black ">{avatar.name}</p> */}
             </div>
           );
         })}
