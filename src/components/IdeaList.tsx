@@ -4,14 +4,21 @@ import { useState, useEffect, useCallback } from 'react';
 import SearchBar from './SearchBar';
 import IdeaPreview from './IdeaPreview';
 import { Idea } from '../types/idea';
-import { collection, onSnapshot, query, orderBy, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { firestore } from '../utils/firebaseConfig';
 import { useAuth } from '../contexts/AuthContext';
 import { addLike, removeLike, hasLiked } from '../utils/likes';
-import Image from 'next/image';
+import { calculateTrendingScore } from '@/utils/utils';
+import IdeaCard from './IdeaCard';
 
 interface IdeaListProps {
   initialIdeas: Idea[];
+}
+
+interface CommentUserProfile {
+  name: string;
+  username: string;
+  profilePictureUrl: string;
 }
 
 const defaultAvatar = 'https://api.dicebear.com/9.x/avataaars-neutral/svg?radius=0';
@@ -29,7 +36,8 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
   const [showComments, setShowComments] = useState(false);
   const [likedIdeas, setLikedIdeas] = useState<Set<string>>(new Set());
   const { user } = useAuth();
-  const [userProfiles, setUserProfiles] = useState<Record<string, { name: string; profilePictureUrl: string }>>({});
+  const [userProfiles, setUserProfiles] = useState<Record<string, CommentUserProfile>>({});
+  const [trendingIdeas, setTrendingIdeas] = useState<Idea[]>([]);
 
   // Debounced search function
   const debouncedSearch = useCallback((term: string) => {
@@ -93,7 +101,7 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
   // Fetch user profiles for ideas
   useEffect(() => {
     const fetchUserProfiles = async () => {
-      const profiles: Record<string, { name: string; profilePictureUrl: string }> = {};
+      const profiles: Record<string, CommentUserProfile> = {};
       
       for (const idea of ideas) {
         console.log('userData in fetchProfiles', idea.authorId)
@@ -106,6 +114,7 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
             if (userData) {
               profiles[idea.authorId] = {
                 name: userData.username || 'Anonymous',
+                username: userData.username || 'Anonymous',
                 profilePictureUrl: userData.profilePictureUrl || defaultAvatar
               };
             }
@@ -115,6 +124,7 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
           // Set default profile for failed fetches
           profiles[idea.authorId] = {
             name: 'Anonymous',
+            username: 'Anonymous',
             profilePictureUrl: defaultAvatar
           };
         }
@@ -126,23 +136,40 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
     fetchUserProfiles();
   }, [ideas]);
 
-  // Update engagement when idea is clicked
+  // Update trending ideas whenever ideas change
+  useEffect(() => {
+    const sortedIdeas = [...ideas].sort((a, b) => {
+      const scoreA = calculateTrendingScore(a);
+      const scoreB = calculateTrendingScore(b);
+      return scoreB - scoreA;
+    });
+    
+    setTrendingIdeas(sortedIdeas.slice(0, 10));
+  }, [ideas]);
+
+  // Update clicks when idea is clicked
   const handleIdeaClick = async (idea: Idea) => {
+    if (!user) return;
+    
     setSelectedIdea(idea);
     setShowComments(false);
     
     try {
       const ideaRef = doc(firestore, 'ideas', idea.id);
       await updateDoc(ideaRef, {
-        engagement: (idea.engagement || 0) + 1
+        clicks: arrayUnion(user.uid),
+        // Remove engagement field if it exists
+        engagement: null
       });
     } catch (error) {
-      console.error('Error updating engagement:', error);
+      console.error('Error updating clicks:', error);
     }
   };
 
-  // Update engagement when comment is clicked
+  // Update clicks when comment is clicked
   const handleCommentClick = async (e: React.MouseEvent, idea: Idea) => {
+    if (!user) return;
+    
     e.stopPropagation();
     setSelectedIdea(idea);
     setShowComments(true);
@@ -150,10 +177,12 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
     try {
       const ideaRef = doc(firestore, 'ideas', idea.id);
       await updateDoc(ideaRef, {
-        engagement: (idea.engagement || 0) + 1
+        clicks: arrayUnion(user.uid),
+        // Remove engagement field if it exists
+        engagement: null
       });
     } catch (error) {
-      console.error('Error updating engagement:', error);
+      console.error('Error updating clicks:', error);
     }
   };
 
@@ -181,116 +210,63 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
         setLikedIdeas(prev => new Set([...prev, idea.id]));
         
         // Update engagement when liking
-        const ideaRef = doc(firestore, 'ideas', idea.id);
-        await updateDoc(ideaRef, {
-          engagement: (idea.engagement || 0) + 1
-        });
+        // const ideaRef = doc(firestore, 'ideas', idea.id);
+        // await updateDoc(ideaRef, {
+        //   engagement: (idea.engagement || 0) + 1
+        // });
       }
     } catch (error) {
       console.error('Error toggling like:', error);
     }
   };
 
-  // Helper function for consistent date formatting
-  const formatDate = (timestamp: string) => {
-    try {
-      const date = new Date(timestamp);
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        return 'Just now';
-      }
-      // Use a specific date format to ensure consistency
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return 'Just now';
-    }
+  // Calculate engagement for an idea
+  const calculateEngagement = (idea: Idea) => {
+    return (idea.likes || 0) + (idea.comments || 0) + (idea.clicks?.length || 0);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={handleSearch} darkMode />
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredIdeas.map(idea => (
-          <div 
-            key={idea.id} 
-            className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100 cursor-pointer"
-            onClick={() => handleIdeaClick(idea)}
-          >
-            <div className="flex items-center mb-4">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden mr-3">
-                <Image
-                  src={userProfiles[idea.authorId]?.profilePictureUrl || defaultAvatar}
-                  alt={userProfiles[idea.authorId]?.name || 'User'}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">{userProfiles[idea.authorId]?.name || 'Anonymous'}</p>
-                <p className="text-sm text-gray-500">{formatDate(idea.timestamp)}</p>
-              </div>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">{idea.headline}</h2>
-            <p className="text-gray-600 mb-4 line-clamp-3">{idea.description}</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {idea.tags.map(tag => (
-                <span
-                  key={tag} 
-                  className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center space-x-4">
-                <button 
-                  className={`flex items-center space-x-1 transition-colors cursor-pointer ${
-                    likedIdeas.has(idea.id) ? 'text-red-500' : 'hover:text-red-500'
-                  }`}
-                  onClick={(e) => handleLike(e, idea)}
-                >
-                  <svg 
-                    className="w-5 h-5" 
-                    fill={likedIdeas.has(idea.id) ? 'currentColor' : 'none'} 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth="2" 
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
-                    />
-                  </svg>
-                  <span>{idea.likes || 0}</span>
-                </button>
-                <button 
-                  className="flex items-center space-x-1 hover:text-blue-600 transition-colors cursor-pointer"
-                  onClick={(e) => handleCommentClick(e, idea)}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <span>{idea.comments || 0}</span>
-                </button>
-                <div className="flex items-center space-x-1 text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  <span>{idea.engagement || 0}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+
+      {/* Trending Section */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-bold text-white mb-6">Trending</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {trendingIdeas.map(idea => (
+            <IdeaCard
+              key={idea.id}
+              idea={idea}
+              userProfile={userProfiles[idea.authorId]}
+              liked={likedIdeas.has(idea.id)}
+              onLike={handleLike}
+              onComment={handleCommentClick}
+              onClick={handleIdeaClick}
+              calculateEngagement={calculateEngagement}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* All Ideas Section */}
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">All Ideas</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredIdeas.map(idea => (
+            <IdeaCard
+              key={idea.id}
+              idea={idea}
+              userProfile={userProfiles[idea.authorId]}
+              liked={likedIdeas.has(idea.id)}
+              onLike={handleLike}
+              onComment={handleCommentClick}
+              onClick={handleIdeaClick}
+              calculateEngagement={calculateEngagement}
+            />
+          ))}
+        </div>
       </div>
 
       {selectedIdea && (
@@ -299,10 +275,10 @@ export default function IdeaList({ initialIdeas }: IdeaListProps) {
           onClick={handleCloseModal}
         >
           <div 
-            className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
+            className="bg-transparent rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-6">
+            <div className="p-2">
               <IdeaPreview 
                 idea={selectedIdea} 
                 commentsOpen={showComments} 

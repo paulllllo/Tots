@@ -48,7 +48,8 @@ export default function CreateIdeaModal({ isOpen, onClose }: CreateIdeaModalProp
         authorId: user.uid,
         timestamp: serverTimestamp(),
         likes: 0,
-        comments: 0
+        comments: 0,
+        clicks: []
       };
 
       await addDoc(collection(firestore, 'ideas'), ideaData);

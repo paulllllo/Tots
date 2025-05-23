@@ -12,7 +12,8 @@ export const addLike = async (userId: string, ideaId: string) => {
   // Update like count on the idea
   const ideaRef = doc(firestore, 'ideas', ideaId);
   await updateDoc(ideaRef, {
-    likes: increment(1)
+    likes: increment(1),
+    engagement: increment(1)
   });
 };
 

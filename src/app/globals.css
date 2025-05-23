@@ -10,6 +10,7 @@
   --background-end-rgb: 255, 255, 255;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --card-gradient: linear-gradient(135deg, #4DE3F7 0%, #101c24 60%, #fff 100%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,4 +25,20 @@ body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-start-rgb));
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.card-gradient-border {
+  position: relative;
+  border-radius: 0.75rem; /* rounded-xl */
+  background: var(--card-gradient) border-box;
+  /* Create a 1px border with the gradient, and keep the card content dark */
+  box-shadow: 0 0 0 1px transparent;
+}
+
+.card-gradient-border > .card-content {
+  border-radius: 0.75rem;
+  background: #101c24;
+  color: #fff;
+  position: relative;
+  z-index: 1;
 }
