@@ -15,7 +15,9 @@ interface IdeaCardProps {
   onLike: (e: React.MouseEvent, idea: Idea) => void;
   onComment: (e: React.MouseEvent, idea: Idea) => void;
   onClick: (idea: Idea) => void;
-  calculateEngagement: (idea: Idea) => number;
+//   calculateEngagement: (idea: Idea) => number;
+// eslint-disable-next-line
+  calculateEngagement: (idea: any) => number;
 }
 
 const defaultAvatar = 'https://api.dicebear.com/9.x/avataaars-neutral/svg?radius=0';
