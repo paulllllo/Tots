@@ -43,41 +43,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-md mx-auto mt-10 p-6 bg-[#101c24] rounded-lg shadow-md text-white">
       <h1 className="text-2xl font-bold mb-6">Login</h1>
       {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="mb-4 p-3 bg-red-900 border border-red-700 text-red-300 rounded">
           {error}
         </div>
       )}
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="email">Email</label>
+          <label className="block text-white mb-2" htmlFor="email">Email</label>
           <input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full p-2 text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 text-white bg-[#18394a] border border-[#4DE3F7] rounded focus:outline-none focus:ring-2 focus:ring-[#4DE3F7] focus:border-[#4DE3F7]"
             required
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="password">Password</label>
+          <label className="block text-white mb-2" htmlFor="password">Password</label>
           <input
             type="password"
             id="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full p-2 text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 text-white bg-[#18394a] border border-[#4DE3F7] rounded focus:outline-none focus:ring-2 focus:ring-[#4DE3F7] focus:border-[#4DE3F7]"
             required
           />
         </div>
         <button 
           type="submit" 
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2 rounded hover:opacity-90 transition-opacity disabled:opacity-50"
           disabled={loading}
         >
           {loading ? 'Logging in...' : 'Login'}
@@ -85,9 +85,9 @@ export default function LoginPage() {
       </form>
 
       {/* Login redirect link */}
-      <p className="mt-4 text-center text-gray-600">
+      <p className="mt-4 text-center text-gray-300">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-blue-500 hover:text-blue-700">
+        <Link href="/signup" className="text-[#4DE3F7] hover:text-white">
           Sign up here
         </Link>
       </p> 
