@@ -71,48 +71,48 @@ export default function CreateIdeaModal({ isOpen, onClose }: CreateIdeaModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 bg-opacity-25 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="bg-[#101c24] p-6 rounded-lg shadow-md w-full max-w-md text-white" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-2xl font-bold mb-4">New Tot</h2>
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-900 border border-red-700 text-red-300 rounded">
             {error}
           </div>
         )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="headline">Headline</label>
+            <label className="block text-white mb-2" htmlFor="headline">Headline</label>
             <input
               type="text"
               id="headline"
               name="headline"
               value={formData.headline}
               onChange={handleChange}
-              className="w-full p-2 text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 text-white bg-[#18394a] border border-[#4DE3F7] rounded focus:outline-none focus:ring-2 focus:ring-[#4DE3F7] focus:border-[#4DE3F7]"
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="description">Description</label>
+            <label className="block text-white mb-2" htmlFor="description">Description</label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="w-full p-2 text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 text-white bg-[#18394a] border border-[#4DE3F7] rounded focus:outline-none focus:ring-2 focus:ring-[#4DE3F7] focus:border-[#4DE3F7]"
               rows={4}
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="tags">Tags (comma-separated)</label>
+            <label className="block text-white mb-2" htmlFor="tags">Tags (comma-separated)</label>
             <input
               type="text"
               id="tags"
               name="tags"
               value={formData.tags}
               onChange={handleChange}
-              className="w-full p-2 text-black border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 text-white bg-[#18394a] border border-[#4DE3F7] rounded focus:outline-none focus:ring-2 focus:ring-[#4DE3F7] focus:border-[#4DE3F7]"
               required
             />
           </div>
@@ -120,14 +120,14 @@ export default function CreateIdeaModal({ isOpen, onClose }: CreateIdeaModalProp
             <button 
               type="button" 
               onClick={onClose} 
-              className="px-4 py-2 bg-gray-300 cursor-pointer rounded hover:bg-gray-400"
+              className="px-4 py-2 bg-gray-700 cursor-pointer rounded hover:bg-gray-600 text-white"
               disabled={loading}
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 disabled:opacity-50"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white cursor-pointer rounded hover:opacity-90 transition-opacity disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Submit'}

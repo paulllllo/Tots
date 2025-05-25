@@ -1,27 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Home, Heart, User, LogOut, Menu, Plus } from 'lucide-react';
+import CreateIdeaModal from './CreateIdeaModal';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
       await logout();
       router.push('/');
+      setSidebarOpen(false);
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
-  const handleOpenModal = () => {/* TODO: Implement modal open logic if needed */};
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+    setSidebarOpen(false);
+  };
+
+  const handleCloseModal = () => setIsModalOpen(false);
 
   return (
     <>
@@ -118,6 +131,9 @@ export default function Sidebar() {
       </aside>
       {/* Padding for main content on desktop */}
       <div className="hidden md:block w-64 flex-shrink-0" />
+
+      {/* Create Idea Modal */}
+      <CreateIdeaModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </>
   );
 } 
