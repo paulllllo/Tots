@@ -25,14 +25,16 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Hamburger for mobile */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 text-white bg-transparent"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open sidebar"
-      >
-        <Menu size={32} />
-      </button>
+      {/* Hamburger menu container for mobile */}
+      <div className="md:hidden fixed top-0 left-0 z-50 p-4 bg-[#06202A]">
+        <button
+          className="text-white bg-transparent"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open sidebar"
+        >
+          <Menu size={32} />
+        </button>
+      </div>
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
         <div

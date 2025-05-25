@@ -33,7 +33,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 p-4">
+            <main className="flex-1 p-4 pt-16 md:pt-4">
               {children}
             </main>
           </div>
