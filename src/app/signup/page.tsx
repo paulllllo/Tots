@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import AvatarSelector from '@/components/AvatarSelector';
+import Link from 'next/link';
 
 export default function Signup() {
   const router = useRouter();
@@ -138,6 +139,12 @@ export default function Signup() {
             </button>
           </div>
         </form>
+        <p className="mt-4 text-center text-gray-300">
+          Already have an account?{' '}
+          <Link href="/login" className="text-[#4DE3F7] hover:text-white">
+            Sign in here
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -84,7 +84,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {/* Login redirect link */}
+      {/* Signup redirect link */}
       <p className="mt-4 text-center text-gray-300">
         Don&apos;t have an account?{' '}
         <Link href="/signup" className="text-[#4DE3F7] hover:text-white">
