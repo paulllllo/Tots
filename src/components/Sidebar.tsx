@@ -30,6 +30,8 @@ export default function Sidebar() {
   };
 
   const handleOpenModal = () => {
+    if (!user) return
+
     setIsModalOpen(true);
     setSidebarOpen(false);
   };
