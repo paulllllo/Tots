@@ -30,7 +30,9 @@ export default function Sidebar() {
   };
 
   const handleOpenModal = () => {
-    if (!user) return
+    if (!user) {
+        router.push('/signup')
+    }
 
     setIsModalOpen(true);
     setSidebarOpen(false);
@@ -40,15 +42,32 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Hamburger menu container for mobile */}
-      <div className="md:hidden fixed top-0 left-0 z-50 p-4 bg-[#06202A]">
+      {/* Floating header for mobile */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#06202A] flex items-center justify-between px-4 py-3 shadow-md">
         <button
           className="text-white bg-transparent"
           onClick={() => setSidebarOpen(true)}
           aria-label="Open sidebar"
         >
-          <Menu size={32} />
+          <Menu size={24} />
         </button>
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/logo.png" alt="Tots Logo" width={32} height={32} />
+          <span className="text-xl font-bold text-white">Tots</span>
+        </Link>
+        {user ? (
+          <button
+            onClick={handleOpenModal}
+            className="text-white cursor-pointer"
+            aria-label="Create post"
+          >
+            <Plus size={24} />
+          </button>
+        ) : (
+          <Link href="/signup" className="text-white">
+            <User size={24} />
+          </Link>
+        )}
       </div>
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
@@ -63,8 +82,8 @@ export default function Sidebar() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Logo and Title */}
-        <div className="flex items-center gap-3 px-6 py-8">
+        {/* Logo and Title - Hide on mobile */}
+        <div className="hidden md:flex items-center gap-3 px-6 py-8">
           <Image src="/logo.png" alt="Tots Logo" width={40} height={40} />
           <span className="text-2xl font-bold text-white">Tots</span>
         </div>

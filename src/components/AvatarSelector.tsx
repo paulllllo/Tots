@@ -33,7 +33,7 @@ export default function AvatarSelector({ onSelect, selectedUrl }: AvatarSelector
 
   return (
     <div className="w-full">
-      <h3 className="text-lg font-medium mb-4 text-black">Choose your avatar</h3>
+      <h3 className="text-lg font-medium mb-4 text-white">Choose your avatar</h3>
       <div className="grid grid-cols-5 gap-4">
         {avatarVariations.map((avatar) => {
           const url = `https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=${avatar.seed}`;
